@@ -9,7 +9,7 @@ function App() {
         <div className="max-w-md w-full space-y-8 bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 p-8">
           <div className="text-center">
             <h1 className="text-4xl font-extrabold text-white tracking-tight">
-              Task Master
+              Task List
             </h1>
             <p className="mt-2 text-lg text-white/80 font-medium">
               Stay organized, stay productive.
