@@ -1,3 +1,4 @@
-id,text,completed
-0ddcec3a-081d-4573-a402-e6fb07d51575,Add value,false
-f7713778-7ac6-41d4-8bf4-e1aae38a0c34,Add more value,false
+id,text,completed,userId
+dcef5920-0370-43b6-ac1e-2d05ef7e10f4,Task for User1,false,c80b4ca8-f9ee-49a6-b072-6431c7683d1f
+27fa532d-3b87-41de-8327-c49d0eb851af,Task for Bob,false,f6982386-4629-4697-a5fe-d0de6347c33e
+c82e2a98-0f55-42b6-ac97-77dbb43a0da0,Generic Task Edited,false,
