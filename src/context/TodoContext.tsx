@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface Todo {
   id: string;
@@ -26,21 +26,47 @@ export const useTodo = () => {
 export const TodoProvider = ({ children }: { children: ReactNode }) => {
   const [todos, setTodos] = useState<Todo[]>([]);
 
+  useEffect(() => {
+    fetch('/api/todos')
+      .then(res => res.json())
+      .then(data => setTodos(data))
+      .catch(err => console.error('Failed to fetch todos', err));
+  }, []);
+
   const addTodo = (text: string) => {
-    setTodos(prev => [
-      ...prev,
-      { id: crypto.randomUUID(), text, completed: false }
-    ]);
+    const newTodo = { id: crypto.randomUUID(), text, completed: false };
+    fetch('/api/todos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newTodo)
+    })
+      .then(res => res.json())
+      .then(savedTodo => setTodos(prev => [...prev, savedTodo]))
+      .catch(err => console.error('Failed to add todo', err));
   };
 
   const toggleTodo = (id: string) => {
-    setTodos(prev => prev.map(todo => 
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ));
+    const todo = todos.find(t => t.id === id);
+    if (!todo) return;
+
+    fetch(`/api/todos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ completed: !todo.completed })
+    })
+      .then(res => res.json())
+      .then(updatedTodo => {
+        setTodos(prev => prev.map(t => t.id === id ? updatedTodo : t));
+      })
+      .catch(err => console.error('Failed to toggle todo', err));
   };
 
   const deleteTodo = (id: string) => {
-    setTodos(prev => prev.filter(todo => todo.id !== id));
+    fetch(`/api/todos/${id}`, {
+      method: 'DELETE'
+    })
+      .then(() => setTodos(prev => prev.filter(t => t.id !== id)))
+      .catch(err => console.error('Failed to delete todo', err));
   };
 
   return (
