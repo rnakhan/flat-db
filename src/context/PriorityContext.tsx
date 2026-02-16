@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { collection, onSnapshot, addDoc, doc, deleteDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export interface Priority {
   id: string;
@@ -19,34 +21,31 @@ export const PriorityProvider = ({ children }: { children: ReactNode }) => {
   const [priorities, setPriorities] = useState<Priority[]>([]);
 
   useEffect(() => {
-    fetch('/api/priorities')
-      .then(res => res.json())
-      .then(data => setPriorities(data))
-      .catch(err => console.error('Failed to fetch priorities', err));
+    const unsubscribe = onSnapshot(collection(db, 'priorities'), (snapshot) => {
+      const parsed = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Priority[];
+      parsed.sort((a, b) => a.level - b.level);
+      setPriorities(parsed);
+    }, (error) => {
+      console.error('Failed to fetch priorities', error);
+    });
+    
+    return () => unsubscribe();
   }, []);
 
-  const addPriority = (name: string, color: string, level: number) => {
-    const newPriority = { id: crypto.randomUUID(), name, color, level };
-    fetch('/api/priorities', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newPriority)
-    })
-      .then(res => res.json())
-      .then(savedPriority => {
-        setPriorities(prev => [...prev, savedPriority].sort((a, b) => a.level - b.level));
-      })
-      .catch(err => console.error('Failed to add priority', err));
+  const addPriority = async (name: string, color: string, level: number) => {
+    try {
+      await addDoc(collection(db, 'priorities'), { name, color, level });
+    } catch (err) {
+      console.error('Failed to add priority', err);
+    }
   };
 
-  const deletePriority = (id: string) => {
-    fetch(`/api/priorities/${id}`, {
-      method: 'DELETE'
-    })
-      .then(() => {
-        setPriorities(prev => prev.filter(p => p.id !== id));
-      })
-      .catch(err => console.error('Failed to delete priority', err));
+  const deletePriority = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'priorities', id));
+    } catch (err) {
+      console.error('Failed to delete priority', err);
+    }
   };
 
   return (

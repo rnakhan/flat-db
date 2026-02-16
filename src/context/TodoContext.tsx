@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export interface Todo {
   id: string;
@@ -32,93 +34,69 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
   const [todos, setTodos] = useState<Todo[]>([]);
 
   useEffect(() => {
-    fetch('/api/todos')
-      .then(res => res.json())
-      .then(data => setTodos(data))
-      .catch(err => console.error('Failed to fetch todos', err));
+    const unsubscribe = onSnapshot(collection(db, 'todos'), (snapshot) => {
+      const parsed = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Todo[];
+      setTodos(parsed);
+    }, (error) => {
+      console.error('Failed to fetch todos', error);
+    });
+    
+    return () => unsubscribe();
   }, []);
 
-  const addTodo = (text: string, userId?: string, priorityId?: string) => {
-    fetch('/api/todos', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: crypto.randomUUID(), text, completed: false, userId: userId || '', priorityId: priorityId || '' })
-    })
-      .then(res => res.json())
-      .then(newTodo => setTodos(prev => [...prev, newTodo]))
-      .catch(err => console.error('Failed to add todo', err));
+  const addTodo = async (text: string, userId?: string, priorityId?: string) => {
+    try {
+      await addDoc(collection(db, 'todos'), { 
+        text, 
+        completed: false, 
+        userId: userId || '', 
+        priorityId: priorityId || '' 
+      });
+    } catch (err) {
+      console.error('Failed to add todo', err);
+    }
   };
 
-  const toggleTodo = (id: string) => {
+  const toggleTodo = async (id: string) => {
     const todo = todos.find(t => t.id === id);
     if (!todo) return;
-
-    fetch(`/api/todos/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ completed: !todo.completed })
-    })
-      .then(res => res.json())
-      .then(updatedTodo => {
-        setTodos(prev => prev.map(t => t.id === id ? updatedTodo : t));
-      })
-      .catch(err => console.error('Failed to toggle todo', err));
+    try {
+      await updateDoc(doc(db, 'todos', id), { completed: !todo.completed });
+    } catch (err) {
+      console.error('Failed to toggle todo', err);
+    }
   };
 
-  const updateTodoUser = (id: string, userId: string) => {
-    const todo = todos.find(t => t.id === id);
-    if (!todo) return;
-
-    fetch(`/api/todos/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId })
-    })
-      .then(res => res.json())
-      .then(updatedTodo => {
-        setTodos(prev => prev.map(t => t.id === id ? updatedTodo : t));
-      })
-      .catch(err => console.error('Failed to update todo user', err));
+  const updateTodoUser = async (id: string, userId: string) => {
+    try {
+      await updateDoc(doc(db, 'todos', id), { userId });
+    } catch (err) {
+      console.error('Failed to update todo user', err);
+    }
   };
 
-  const updateTodoPriority = (id: string, priorityId: string) => {
-    const todo = todos.find(t => t.id === id);
-    if (!todo) return;
-
-    fetch(`/api/todos/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ priorityId })
-    })
-      .then(res => res.json())
-      .then(updatedTodo => {
-        setTodos(prev => prev.map(t => t.id === id ? updatedTodo : t));
-      })
-      .catch(err => console.error('Failed to update todo priority', err));
+  const updateTodoPriority = async (id: string, priorityId: string) => {
+    try {
+      await updateDoc(doc(db, 'todos', id), { priorityId });
+    } catch (err) {
+      console.error('Failed to update todo priority', err);
+    }
   };
 
-  const updateTodoText = (id: string, text: string) => {
-    const todo = todos.find(t => t.id === id);
-    if (!todo) return;
-
-    fetch(`/api/todos/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text })
-    })
-      .then(res => res.json())
-      .then(updatedTodo => {
-        setTodos(prev => prev.map(t => t.id === id ? updatedTodo : t));
-      })
-      .catch(err => console.error('Failed to update todo text', err));
+  const updateTodoText = async (id: string, text: string) => {
+    try {
+      await updateDoc(doc(db, 'todos', id), { text });
+    } catch (err) {
+      console.error('Failed to update todo text', err);
+    }
   };
 
-  const deleteTodo = (id: string) => {
-    fetch(`/api/todos/${id}`, {
-      method: 'DELETE'
-    })
-      .then(() => setTodos(prev => prev.filter(t => t.id !== id)))
-      .catch(err => console.error('Failed to delete todo', err));
+  const deleteTodo = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'todos', id));
+    } catch (err) {
+      console.error('Failed to delete todo', err);
+    }
   };
 
   return (

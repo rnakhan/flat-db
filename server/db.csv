@@ -1,9 +1,0 @@
-id,text,completed,userId,priorityId
-dcef5920-0370-43b6-ac1e-2d05ef7e10f4,Task for User1,false,c80b4ca8-f9ee-49a6-b072-6431c7683d1f,
-27fa532d-3b87-41de-8327-c49d0eb851af,Task for Bob,false,f6982386-4629-4697-a5fe-d0de6347c33e,
-c82e2a98-0f55-42b6-ac97-77dbb43a0da0,Generic Task Final,false,333a5d49-b2ac-47c8-8163-d7e7259bc958,
-3f7e797e-f818-4bfc-b5b2-6614f1920d7a,A new tast,false,5d7470e1-558a-485f-af0b-abe1da7577e9,
-b5ac980e-58b5-4f9a-9aca-f6e921a80c51,Brand new task,false,a6d9636f-3c81-4483-a67e-01fe17f9625b,
-,API Task,false,,6398ce93-d177-4705-af66-c6ea3f065ff3
-,Urgent Task,false,,6398ce93-d177-4705-af66-c6ea3f065ff3
-,Chill Task,false,,6b7276e9-5efc-402b-812b-0cef0fda30fb

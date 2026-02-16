@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { collection, onSnapshot, addDoc, doc, deleteDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 export interface User {
   id: string;
@@ -26,30 +28,30 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
-    fetch('/api/users')
-      .then(res => res.json())
-      .then(data => setUsers(data))
-      .catch(err => console.error('Failed to fetch users', err));
+    const unsubscribe = onSnapshot(collection(db, 'users'), (snapshot) => {
+      const parsed = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as User[];
+      setUsers(parsed);
+    }, (error) => {
+      console.error('Failed to fetch users', error);
+    });
+    
+    return () => unsubscribe();
   }, []);
 
-  const addUser = (name: string, color: string) => {
-    const newUser = { id: crypto.randomUUID(), name, color };
-    fetch('/api/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newUser)
-    })
-      .then(res => res.json())
-      .then(savedUser => setUsers(prev => [...prev, savedUser]))
-      .catch(err => console.error('Failed to add user', err));
+  const addUser = async (name: string, color: string) => {
+    try {
+      await addDoc(collection(db, 'users'), { name, color });
+    } catch (err) {
+      console.error('Failed to add user', err);
+    }
   };
 
-  const deleteUser = (id: string) => {
-    fetch(`/api/users/${id}`, {
-      method: 'DELETE'
-    })
-      .then(() => setUsers(prev => prev.filter(u => u.id !== id)))
-      .catch(err => console.error('Failed to delete user', err));
+  const deleteUser = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'users', id));
+    } catch (err) {
+      console.error('Failed to delete user', err);
+    }
   };
 
   return (
