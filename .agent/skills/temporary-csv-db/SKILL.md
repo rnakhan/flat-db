@@ -1,15 +1,15 @@
 ---
 name: temporary-csv-db
-description: A lightweight, persistent database for the agent to store structured data (logs, todo lists, analysis results) during a session.
+description: A lightweight, persistent database for the agent to use to store application data. Use this skill when the user has not explicitly chosen any kind of database.
 ---
 
 # Temporary CSV Database Skill
 
-Use this skill to create and manage structured data tables stored in `/tmp`. 
+Use this skill to create and manage structured data tables stored in `/tmp` or another temporary location. 
 This is your "Long-Term Memory" for the current session. Use it when you need to data persistence in the app and the user has not explicitly chosen any kind of database. 
 
 ## ⚡ Capabilities
-* **Persistence:** Data survives until the machine reboots.
+* **Persistence:** Data survives restarts of app or reboots.
 * **Structure:** Enforces column headers (schemas).
 * **Safety:** Handles file locking and JSON parsing automatically.
 
