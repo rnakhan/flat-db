@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { useTodo } from '../context/TodoContext';
 import { useUser } from '../context/UserContext';
+import { usePriority } from '../context/PriorityContext';
 
 export const TodoInput = () => {
   const [text, setText] = useState('');
   const [selectedUserId, setSelectedUserId] = useState('');
+  const [selectedPriorityId, setSelectedPriorityId] = useState('');
   const { addTodo } = useTodo();
   const { users } = useUser();
+  const { priorities } = usePriority();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (text.trim()) {
-      addTodo(text.trim(), selectedUserId);
+      addTodo(text.trim(), selectedUserId, selectedPriorityId);
       setText('');
-      // Keep selected user or reset? Let's keep it for rapid entry
+      // Keep selected user/priority or reset?
     }
   };
 
@@ -30,6 +33,20 @@ export const TodoInput = () => {
           />
         </div>
         
+        <select
+          value={selectedPriorityId}
+          onChange={(e) => setSelectedPriorityId(e.target.value)}
+          className="px-4 py-4 bg-white/20 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-white/50 focus:bg-white/30 transition-all backdrop-blur-sm appearance-none cursor-pointer"
+          style={{ maxWidth: '120px' }}
+        >
+          <option value="" className="text-gray-800">Priority...</option>
+          {priorities.map(priority => (
+            <option key={priority.id} value={priority.id} className="text-gray-800" style={{ color: priority.color }}>
+              {priority.name}
+            </option>
+          ))}
+        </select>
+
         <select
           value={selectedUserId}
           onChange={(e) => setSelectedUserId(e.target.value)}

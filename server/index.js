@@ -14,6 +14,8 @@ const PORT = 3001;
 const DB_PATH = path.join(__dirname, 'db.csv');
 const USERS_DB_PATH = path.join(__dirname, 'users.csv');
 
+const PRIORITIES_DB_PATH = path.join(__dirname, 'priorities.csv');
+
 app.use(cors());
 app.use(express.json());
 
@@ -37,6 +39,7 @@ const readCSV = (filePath) => {
       .on('data', (data) => {
         // Simple type inference
         if (data.completed) data.completed = data.completed === 'true';
+        if (data.level) data.level = parseInt(data.level, 10);
         if (!data.id && !data.text && !data.name) return; // Skip empty rows
         results.push(data);
       })
@@ -59,7 +62,8 @@ const TODO_HEADERS = [
   { id: 'id', title: 'id' },
   { id: 'text', title: 'text' },
   { id: 'completed', title: 'completed' },
-  { id: 'userId', title: 'userId' }
+  { id: 'userId', title: 'userId' },
+  { id: 'priorityId', title: 'priorityId' }
 ];
 
 const USER_HEADERS = [
@@ -68,8 +72,16 @@ const USER_HEADERS = [
   { id: 'color', title: 'color' }
 ];
 
+const PRIORITY_HEADERS = [
+  { id: 'id', title: 'id' },
+  { id: 'name', title: 'name' },
+  { id: 'color', title: 'color' },
+  { id: 'level', title: 'level' }
+];
+
 initializeDB(DB_PATH, TODO_HEADERS);
 initializeDB(USERS_DB_PATH, USER_HEADERS);
+initializeDB(PRIORITIES_DB_PATH, PRIORITY_HEADERS);
 
 // --- TODOS API ---
 
@@ -89,7 +101,8 @@ app.post('/api/todos', async (req, res) => {
       id: req.body.id,
       text: req.body.text,
       completed: req.body.completed,
-      userId: req.body.userId || ''
+      userId: req.body.userId || '',
+      priorityId: req.body.priorityId || ''
     };
     todos.push(newTodo);
     await writeCSV(DB_PATH, TODO_HEADERS, todos);
@@ -162,6 +175,47 @@ app.delete('/api/users/:id', async (req, res) => {
     // Optional: Unassign tasks attached to this user? 
     // For now, let's keep it simple and leave them as is (or handle in frontend)
     
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- PRIORITIES API ---
+
+app.get('/api/priorities', async (req, res) => {
+  try {
+    const priorities = await readCSV(PRIORITIES_DB_PATH);
+    // Sort by level (ascending or descending? usually lower level = higher priority or vice versa. Let's assume user defines 'level' as rank, e.g. 1 is highest)
+    priorities.sort((a, b) => a.level - b.level);
+    res.json(priorities);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/priorities', async (req, res) => {
+  try {
+    const priorities = await readCSV(PRIORITIES_DB_PATH);
+    const newPriority = {
+      id: req.body.id,
+      name: req.body.name,
+      color: req.body.color,
+      level: req.body.level
+    };
+    priorities.push(newPriority);
+    await writeCSV(PRIORITIES_DB_PATH, PRIORITY_HEADERS, priorities);
+    res.json(newPriority);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/priorities/:id', async (req, res) => {
+  try {
+    const priorities = await readCSV(PRIORITIES_DB_PATH);
+    const newPriorities = priorities.filter(p => p.id !== req.params.id);
+    await writeCSV(PRIORITIES_DB_PATH, PRIORITY_HEADERS, newPriorities);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

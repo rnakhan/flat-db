@@ -5,15 +5,17 @@ export interface Todo {
   text: string;
   completed: boolean;
   userId?: string;
+  priorityId?: string;
 }
 
 interface TodoContextType {
   todos: Todo[];
-  addTodo: (text: string, userId?: string) => void;
+  addTodo: (text: string, userId?: string, priorityId?: string) => void;
   toggleTodo: (id: string) => void;
   deleteTodo: (id: string) => void;
   updateTodoUser: (id: string, userId: string) => void;
   updateTodoText: (id: string, text: string) => void;
+  updateTodoPriority: (id: string, priorityId: string) => void;
 }
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);
@@ -36,15 +38,14 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
       .catch(err => console.error('Failed to fetch todos', err));
   }, []);
 
-  const addTodo = (text: string, userId?: string) => {
-    const newTodo = { id: crypto.randomUUID(), text, completed: false, userId: userId || '' };
+  const addTodo = (text: string, userId?: string, priorityId?: string) => {
     fetch('/api/todos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newTodo)
+      body: JSON.stringify({ id: crypto.randomUUID(), text, completed: false, userId: userId || '', priorityId: priorityId || '' })
     })
       .then(res => res.json())
-      .then(savedTodo => setTodos(prev => [...prev, savedTodo]))
+      .then(newTodo => setTodos(prev => [...prev, newTodo]))
       .catch(err => console.error('Failed to add todo', err));
   };
 
@@ -80,6 +81,22 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
       .catch(err => console.error('Failed to update todo user', err));
   };
 
+  const updateTodoPriority = (id: string, priorityId: string) => {
+    const todo = todos.find(t => t.id === id);
+    if (!todo) return;
+
+    fetch(`/api/todos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ priorityId })
+    })
+      .then(res => res.json())
+      .then(updatedTodo => {
+        setTodos(prev => prev.map(t => t.id === id ? updatedTodo : t));
+      })
+      .catch(err => console.error('Failed to update todo priority', err));
+  };
+
   const updateTodoText = (id: string, text: string) => {
     const todo = todos.find(t => t.id === id);
     if (!todo) return;
@@ -105,7 +122,7 @@ export const TodoProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <TodoContext.Provider value={{ todos, addTodo, toggleTodo, deleteTodo, updateTodoUser, updateTodoText }}>
+    <TodoContext.Provider value={{ todos, addTodo, toggleTodo, deleteTodo, updateTodoUser, updateTodoText, updateTodoPriority }}>
       {children}
     </TodoContext.Provider>
   );

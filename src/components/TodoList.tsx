@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useTodo } from '../context/TodoContext';
 import { useUser } from '../context/UserContext';
+import { usePriority } from '../context/PriorityContext';
 
 export const TodoList = () => {
-  const { todos, toggleTodo, deleteTodo, updateTodoUser, updateTodoText } = useTodo();
+  const { todos, toggleTodo, deleteTodo, updateTodoUser, updateTodoText, updateTodoPriority } = useTodo();
   const { users } = useUser();
+  const { priorities } = usePriority();
   const [filterUserId, setFilterUserId] = useState<string>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
@@ -65,12 +67,16 @@ export const TodoList = () => {
       <ul className="space-y-4">
         {filteredTodos.map((todo) => {
           const assignedUser = users.find(u => u.id === todo.userId);
+          const assignedPriority = priorities.find(p => p.id === todo.priorityId);
           const isEditing = editingId === todo.id;
           
           return (
             <li
               key={todo.id}
-              className="group flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all duration-200"
+              className="group flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all duration-200 shadow-sm"
+              style={{ 
+                borderLeft: assignedPriority ? `4px solid ${assignedPriority.color}` : '1px solid rgba(255,255,255,0.1)'
+              }}
             >
               <div className="flex items-center gap-4 flex-1 min-w-0 w-full">
                 <button
@@ -100,20 +106,43 @@ export const TodoList = () => {
                       className="w-full bg-transparent text-lg text-white border-b border-white/50 focus:outline-none focus:border-white"
                     />
                   ) : (
-                    <span
-                      onClick={() => startEditing(todo)}
-                      className={`text-lg truncate block transition-all cursor-text hover:text-white/80 ${
-                        todo.completed ? 'text-white/30 line-through' : 'text-white font-medium'
-                      }`}
-                      title="Click to edit"
-                    >
-                      {todo.text}
-                    </span>
+                    <div className="flex flex-col">
+                      <span
+                        onClick={() => startEditing(todo)}
+                        className={`text-lg truncate block transition-all cursor-text hover:text-white/80 ${
+                          todo.completed ? 'text-white/30 line-through' : 'text-white font-medium'
+                        }`}
+                        title="Click to edit"
+                      >
+                        {todo.text}
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
 
               <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                {/* Priority Assignment Dropdown */}
+                <div className="relative group/priority">
+                  <select
+                    value={todo.priorityId || ''}
+                    onChange={(e) => updateTodoPriority(todo.id, e.target.value)}
+                    className="appearance-none bg-white/5 text-xs text-white/70 hover:text-white border border-white/10 hover:border-white/30 rounded px-2 py-1 pr-6 cursor-pointer focus:outline-none focus:bg-white/10 transition-all"
+                    style={{ 
+                      maxWidth: '100px', 
+                      color: assignedPriority ? assignedPriority.color : undefined,
+                      fontWeight: assignedPriority ? 'bold' : 'normal'
+                    }}
+                  >
+                    <option value="" className="text-gray-800">No Priority</option>
+                    {priorities.map(priority => (
+                      <option key={priority.id} value={priority.id} className="text-gray-800" style={{ color: priority.color }}>
+                        {priority.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* User Assignment Dropdown */}
                 <div className="relative group/user">
                   <select
